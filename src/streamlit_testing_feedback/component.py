@@ -3,7 +3,7 @@ import time
 from pathlib import Path
 from typing import MutableMapping
 
-from streamlit_testing_feedback import session
+from streamlit_testing_feedback import events, session
 
 
 def handle_value(
@@ -30,10 +30,14 @@ def handle_value(
         if state.get(started_key) != value["startedAt"]:
             state[started_key] = value["startedAt"]
             state[offset_key] = time.time() * 1000 - value["startedAt"]
+            state[events.STARTED_SERVER_KEY] = value["startedAt"] + state[offset_key]
+            state[events.EVENTS_KEY] = []
         return None
     if value["status"] == "stopped":
         if state.get(written_key) == value["startedAt"]:
             return state.get(last_zip_key)
+        tier2_events = state.pop(events.EVENTS_KEY, [])
+        state.pop(events.STARTED_SERVER_KEY, None)
         meta = session.build_session_meta(
             app_url=value.get("app_url", ""),
             started_at_ms=value["startedAt"],
@@ -46,6 +50,7 @@ def handle_value(
             recording=base64.b64decode(value["recording_b64"]),
             voice=base64.b64decode(voice_b64) if voice_b64 else None,
             session=meta,
+            events=tier2_events,
         )
         state[written_key] = value["startedAt"]
         state[last_zip_key] = path
