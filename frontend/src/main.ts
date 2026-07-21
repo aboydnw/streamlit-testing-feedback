@@ -63,6 +63,12 @@ async function start() {
     statusEl.textContent = "REC"
     Streamlit.setComponentValue({ status: "recording", startedAt })
   } catch (err) {
+    if (screenRec && screenRec.state !== "inactive") screenRec.stop()
+    if (voiceRec && voiceRec.state !== "inactive") voiceRec.stop()
+    streams.forEach((s) => s.getTracks().forEach((t) => t.stop()))
+    streams = []
+    screenRec = null
+    voiceRec = null
     setIdle(`blocked: ${(err as Error).name}`)
   }
 }

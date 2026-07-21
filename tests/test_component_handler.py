@@ -36,7 +36,7 @@ def test_start_records_clock_offset(tmp_path, frozen_now):
     state = {}
     result = component.handle_value(start_value(), tmp_path, state)
     assert result is None
-    assert state["stf_clock_offset_ms"] == pytest.approx(150.0)
+    assert state["stf_recorder:clock_offset_ms"] == pytest.approx(150.0)
 
 
 def test_offset_not_recomputed_on_rerun(tmp_path, frozen_now, monkeypatch):
@@ -44,7 +44,17 @@ def test_offset_not_recomputed_on_rerun(tmp_path, frozen_now, monkeypatch):
     component.handle_value(start_value(), tmp_path, state)
     monkeypatch.setattr(component.time, "time", lambda: STARTED_MS / 1000 + 99)
     component.handle_value(start_value(), tmp_path, state)
-    assert state["stf_clock_offset_ms"] == pytest.approx(150.0)
+    assert state["stf_recorder:clock_offset_ms"] == pytest.approx(150.0)
+
+
+def test_state_namespaced_by_key(tmp_path, frozen_now):
+    state = {}
+    component.handle_value(start_value(), tmp_path, state, key="a")
+    assert "a:clock_offset_ms" in state
+    assert "b:clock_offset_ms" not in state
+    component.handle_value(stop_value(), tmp_path, state, key="a")
+    path_b = component.handle_value(stop_value(), tmp_path, state, key="b")
+    assert path_b is not None
 
 
 def test_stop_writes_zip(tmp_path, frozen_now):
