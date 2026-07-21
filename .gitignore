@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+.feedback/
+spike/out/
+dist/
+!src/streamlit_testing_feedback/frontend/dist/
+.pytest_cache/
