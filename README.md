@@ -36,6 +36,14 @@ with stf.instrument("retrieval", k=5):
     results = retriever.retrieve(q, k=5)
 ```
 
+`instrument` emits a paired `phase="start"` event on entry and a `phase="end"`
+event on exit. The start event means an operation the tester **abandons** — kicks
+off, then navigates away or stops recording before it finishes — still leaves a
+trace. The end event carries `duration_ms`, `ok`, and `interrupted`; `interrupted`
+is True when the block was torn down by a control-flow exception (Streamlit's
+`RerunException`/`StopException`, both `BaseException` subclasses) rather than
+failing with an ordinary error.
+
 Gitignore `.feedback/` in the consuming project.
 
 ## The recording flow
@@ -55,7 +63,7 @@ Gitignore `.feedback/` in the consuming project.
 | File | What it is |
 |---|---|
 | `session.json` | recorder version, app URL, page, start time, `duration_ms`, `clock_offset_ms` |
-| `events.json` | `{schema_version, events: [{type, t_ms, payload}]}` — server-side tier-2 events, `t_ms` relative to recording start, clock-offset corrected against the video |
+| `events.json` | `{schema_version, events: [{type, t_ms, payload}]}` — server-side tier-2 events, `t_ms` relative to recording start, clock-offset corrected against the video. `instrument` blocks appear as `phase="start"`/`phase="end"` pairs; an abandoned op has a start with no matching `ok=True` end |
 | `recording.webm` | screen video (no audio track) |
 | `voice.webm` | mic narration (absent if the mic was declined) |
 
