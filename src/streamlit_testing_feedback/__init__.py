@@ -1,4 +1,4 @@
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 from streamlit_testing_feedback.component import feedback_recorder
 from streamlit_testing_feedback.events import instrument, is_recording, log_event
