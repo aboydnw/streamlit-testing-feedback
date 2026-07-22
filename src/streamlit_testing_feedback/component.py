@@ -68,5 +68,8 @@ def feedback_recorder(dir: str = ".feedback", key: str = "stf_recorder"):
     recorder = components.declare_component(
         "streamlit_testing_feedback", path=str(dist)
     )
-    value = recorder(key=key, default=None)
+    last_zip = st.session_state.get(f"{key}:last_zip")
+    value = recorder(
+        key=key, default=None, last_zip=last_zip.name if last_zip else None
+    )
     return handle_value(value, Path(dir), st.session_state, key=key)
