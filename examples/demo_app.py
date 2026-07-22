@@ -15,9 +15,7 @@ def page_b():
 
 
 with st.sidebar:
-    zip_path = stf.feedback_recorder(dir=".feedback")
-if zip_path:
-    st.sidebar.success(f"session saved: {zip_path.name}")
+    stf.feedback_recorder(dir=".feedback")
 
 pages = st.navigation([st.Page(page_a, title="A"), st.Page(page_b, title="B")])
 pages.run()
