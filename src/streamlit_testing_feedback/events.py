@@ -45,13 +45,43 @@ def log_event(type: str, **payload) -> None:
 
 @contextmanager
 def instrument(name: str, **payload):
-    """Time a block and log it as an event; records ok=False if it raised."""
+    """Time a block, logging a ``phase="start"`` event on entry and a
+    ``phase="end"`` event on exit.
+
+    The start event means an abandoned operation still leaves a trace: a tester
+    who kicks off a long op and navigates away is the common case, not the
+    exception. The exit event catches ``BaseException`` (not just ``Exception``)
+    so Streamlit's ``RerunException``/``StopException`` — raised to tear down an
+    in-progress script run, and both subclasses of ``BaseException`` — are
+    recorded rather than slipping through silently. ``interrupted`` is True when
+    the block was killed by such a control-flow exception rather than failing
+    with an ordinary error.
+    """
+    log_event(name, **{**payload, "phase": "start"})
     start = time.perf_counter()
     try:
         yield
-    except Exception:
+    except BaseException as exc:
         duration_ms = round((time.perf_counter() - start) * 1000)
-        log_event(name, **{**payload, "duration_ms": duration_ms, "ok": False})
+        log_event(
+            name,
+            **{
+                **payload,
+                "phase": "end",
+                "duration_ms": duration_ms,
+                "ok": False,
+                "interrupted": not isinstance(exc, Exception),
+            },
+        )
         raise
     duration_ms = round((time.perf_counter() - start) * 1000)
-    log_event(name, **{**payload, "duration_ms": duration_ms, "ok": True})
+    log_event(
+        name,
+        **{
+            **payload,
+            "phase": "end",
+            "duration_ms": duration_ms,
+            "ok": True,
+            "interrupted": False,
+        },
+    )
