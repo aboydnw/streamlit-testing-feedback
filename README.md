@@ -15,8 +15,9 @@ consuming project's `.feedback/` directory for agent-driven analysis.
     with stf.instrument("retrieval", k=5):            # timed event (+ok flag)
         ...
 
-Events land in the zip's `events.json` as `{type, t_ms, payload}` with `t_ms`
-relative to recording start, clock-offset corrected against the video.
+Events land in the zip's `events.json` as
+`{schema_version, events: [{type, t_ms, payload}]}`. Each `t_ms` is relative
+to recording start, clock-offset corrected against the video.
 
 ## Headless-VM gotcha
 

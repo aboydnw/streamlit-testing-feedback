@@ -103,6 +103,27 @@ def test_stop_writes_buffered_events_into_zip(tmp_path, frozen_now):
     ]
 
 
+def test_stop_preserves_events_when_write_fails(tmp_path, frozen_now, monkeypatch):
+    state = {}
+    component.handle_value(start_value(), tmp_path, state)
+    state[events.EVENTS_KEY].append({"type": "query", "t_ms": 1, "payload": {}})
+    original = component.session.write_session_zip
+
+    def boom(*args, **kwargs):
+        raise OSError
+
+    monkeypatch.setattr(component.session, "write_session_zip", boom)
+    with pytest.raises(OSError):
+        component.handle_value(stop_value(), tmp_path, state)
+    assert state[events.EVENTS_KEY] == [{"type": "query", "t_ms": 1, "payload": {}}]
+
+    monkeypatch.setattr(component.session, "write_session_zip", original)
+    path = component.handle_value(stop_value(), tmp_path, state)
+    with zipfile.ZipFile(path) as zf:
+        data = json.loads(zf.read("events.json"))
+    assert data["events"] == [{"type": "query", "t_ms": 1, "payload": {}}]
+
+
 def test_stop_clears_recording_state(tmp_path, frozen_now):
     state = {}
     component.handle_value(start_value(), tmp_path, state)

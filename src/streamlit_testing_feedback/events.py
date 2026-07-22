@@ -1,3 +1,11 @@
+"""Tier-2 event buffer.
+
+Event state is app-global by design: `log_event` is called from application
+code that doesn't know which recorder instance is mounted. Tier 2 assumes a
+single recorder per app (multiple `feedback_recorder` mounts share one event
+stream).
+"""
+
 import time
 from contextlib import contextmanager
 
@@ -43,7 +51,7 @@ def instrument(name: str, **payload):
         yield
     except Exception:
         duration_ms = round((time.perf_counter() - start) * 1000)
-        log_event(name, duration_ms=duration_ms, ok=False, **payload)
+        log_event(name, **{**payload, "duration_ms": duration_ms, "ok": False})
         raise
     duration_ms = round((time.perf_counter() - start) * 1000)
-    log_event(name, duration_ms=duration_ms, ok=True, **payload)
+    log_event(name, **{**payload, "duration_ms": duration_ms, "ok": True})

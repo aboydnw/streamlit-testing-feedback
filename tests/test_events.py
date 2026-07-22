@@ -67,6 +67,16 @@ def test_instrument_logs_failure_and_reraises(recording, monkeypatch):
     assert event["payload"]["ok"] is False
 
 
+def test_instrument_reserved_payload_keys_overridden(recording, monkeypatch):
+    ticks = iter([10.0, 10.2])
+    monkeypatch.setattr(events.time, "perf_counter", lambda: next(ticks))
+    with events.instrument("x", ok="user-value", duration_ms=999):
+        pass
+    (event,) = recording[events.EVENTS_KEY]
+    assert event["payload"]["ok"] is True
+    assert event["payload"]["duration_ms"] == 200
+
+
 def test_instrument_noop_when_not_recording(state):
     with events.instrument("retrieval"):
         pass

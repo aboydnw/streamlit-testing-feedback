@@ -36,8 +36,7 @@ def handle_value(
     if value["status"] == "stopped":
         if state.get(written_key) == value["startedAt"]:
             return state.get(last_zip_key)
-        tier2_events = state.pop(events.EVENTS_KEY, [])
-        state.pop(events.STARTED_SERVER_KEY, None)
+        tier2_events = state.get(events.EVENTS_KEY, [])
         meta = session.build_session_meta(
             app_url=value.get("app_url", ""),
             started_at_ms=value["startedAt"],
@@ -52,6 +51,8 @@ def handle_value(
             session=meta,
             events=tier2_events,
         )
+        state.pop(events.EVENTS_KEY, None)
+        state.pop(events.STARTED_SERVER_KEY, None)
         state[written_key] = value["startedAt"]
         state[last_zip_key] = path
         return path
